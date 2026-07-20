@@ -6,12 +6,14 @@ record a quick video (or answer in writing) in exchange for the reward.
 
 ## Stack
 
-- Next.js 16 (App Router, TypeScript, Turbopack default)
-- Tailwind v4 + shadcn/ui
-- Supabase: Postgres, Auth, Storage
-- Zod + React Hook Form
+- Nuxt 4 (Vue 3, TypeScript), migrated from Next.js 16 App Router
+- Pinia for state, `@nuxtjs/supabase` for auth/session, Nitro (`server/api/`)
+  for owner mutations
+- Tailwind v4 + shadcn-vue (built on Reka UI, not Radix)
+- Supabase: Postgres, Auth, Storage — schema/RLS unchanged by the migration
+- Zod + vee-validate
 - `qrcode` for QR generation, `canvas-confetti` for the reward screen,
-  `@dnd-kit` for drag-to-reorder questions
+  `vuedraggable` for drag-to-reorder questions
 
 ## Routes
 
@@ -19,7 +21,8 @@ record a quick video (or answer in writing) in exchange for the reward.
 | --- | --- | --- |
 | `/` | public | Marketing/landing page |
 | `/login`, `/signup` | public | Email/password auth. Signup collects a business name and auto-provisions a business + 9 seed questions (see below). |
-| `/c/[slug]` | public | The public collection page. Welcome → contact info → one screen per active question → reward. Fully dynamic (`export const dynamic = "force-dynamic"`), no caching. |
+| `/confirm` | public | Email-confirmation / PKCE callback (`@nuxtjs/supabase`'s `redirectOptions.callback`). |
+| `/c/[slug]` | public | The public collection page. Welcome → contact info → one screen per active question → reward. Fully dynamic, never cached (`routeRules['/c/**']`). |
 | `/dashboard` | owner | Stat cards (Total Responses, Video Testimonials, Written Responses, Completion Rate) + recent responses. |
 | `/dashboard/questions` | owner | CRUD + drag-to-reorder for questions. |
 | `/dashboard/testimonials` | owner | Video answer gallery, filterable by status. |
@@ -28,11 +31,35 @@ record a quick video (or answer in writing) in exchange for the reward.
 | `/dashboard/qr` | owner | QR code for `/c/[slug]`, downloadable PNG, WhatsApp share, table-tent preview. |
 | `/dashboard/settings` | owner | Business name, logo, brand color, reward text/code/terms. |
 
-`/dashboard/*` is protected by `proxy.ts` (Next.js 16 renamed `middleware.ts` →
-`proxy.ts`, exported function `proxy`, runtime is always `nodejs`), which
-redirects unauthenticated visitors to `/login`. Everything else is
-unauthenticated by design — `/c/[slug]` in particular must never require a
-session.
+`/dashboard/*` is protected by `@nuxtjs/supabase`'s `redirectOptions.include`
+(`nuxt.config.ts`), which redirects unauthenticated visitors to `/login` —
+this replaces the old Next `proxy.ts` middleware. `app/layouts/dashboard.vue`
+adds a belt-and-braces check for the edge case of an authenticated user with
+no business row. Everything else is unauthenticated by design — `/c/[slug]`
+in particular must never require a session (verify this explicitly after
+touching auth config: it's the easiest thing to regress).
+
+## Architecture
+
+- **Pages** (`app/pages/`) fetch their own data via `useAsyncData` +
+  `useSupabaseClient()` and write into Pinia stores; components read from the
+  stores rather than taking `initialX` props. See `app/stores/`:
+  `business.ts`, `responses.ts` (also the mutation path for publish/hide —
+  every dashboard view reads the same array, so a status change is visible
+  everywhere immediately, no manual cache invalidation), `questions.ts`,
+  `theme.ts`.
+- **Owner mutations** go through Nitro routes in `server/api/` (`responses/`,
+  `questions/`, `business/`), each starting with `requireBusiness(event)`
+  (`server/utils/auth.ts`) for authorization on top of RLS.
+- **Public writes** (`/c/[slug]` contact form + answers, including video
+  upload) stay client-side and anonymous, going straight through
+  `useSupabaseClient()` against the `public_insert_*` RLS policies below —
+  these intentionally do **not** go through `server/api/`.
+- **Video capture** (`app/composables/useVideoCapture.ts`) owns the
+  MediaRecorder/camera state machine; `app/components/collection/AnswerQuestion.vue`
+  owns mode switching (record/upload/write) and the three `answers` insert
+  call sites. Every native browser object (`MediaStream`, `MediaRecorder`,
+  `Blob`) is held in a `shallowRef`, never a plain `ref`.
 
 ## Data model
 
@@ -52,14 +79,18 @@ Storage buckets: `testimonials` (customer-submitted video answers — public
 read, anon insert, capped at 100 MiB, `video/webm`/`video/mp4` only) and
 `logos` (business branding assets — public read, authenticated insert/update).
 
-Full definitions, indexes, and RLS policies are in `supabase/schema.sql`. Run
-it once against a fresh Supabase project (SQL Editor or `supabase db push`).
+Full definitions, indexes, and RLS policies are in `supabase/schema.sql`
+(unchanged by the Nuxt migration). Run it once against a fresh Supabase
+project (SQL Editor or `supabase db push`). `app/types/database.types.ts` is
+a hand-written TypeScript mirror of this schema for `useSupabaseClient<Database>()`
+— it is not generated, so keep it in sync manually if the schema changes.
 
 ## RLS summary
 
 - Owners have full CRUD on their own `businesses`/`questions`/`responses`/
   `answers`, scoped through `auth.uid() = businesses.owner_id` (directly, or
-  via a join for the child tables).
+  via a join for the child tables). Nitro routes additionally scope every
+  query with `.eq('business_id', businessId)` on top of RLS.
 - `businesses` and active `questions` are readable `to public` (not just
   `anon`) — a logged-in owner can still preview any business's public page.
 - `responses`/`answers` have **no public SELECT policy at all**, only
@@ -80,35 +111,23 @@ it once against a fresh Supabase project (SQL Editor or `supabase db push`).
 
 See `.env.example`. Supabase projects created after Nov 2025 issue
 publishable/secret keys instead of legacy anon/service_role JWTs — the app
-uses that naming (`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`),
-but either key format works since the client code just treats them as opaque
-strings.
+uses that naming (`NUXT_PUBLIC_SUPABASE_KEY`), but either key format works
+since the client code just treats it as an opaque string. There is currently
+no server-only Supabase secret key in use (the old `admin.ts` service-role
+client was dead code in the Next app and wasn't ported).
 
 ## Demo notes
 
 - Supabase projects require email confirmation by default. For a live demo,
   turn off "Confirm email" in the Supabase Auth dashboard settings, or signup
-  won't establish a session until the confirmation link is clicked.
-- The admin client (`lib/supabase/admin.ts`, secret-key, RLS-bypassing) isn't
-  used anywhere yet — every owner mutation goes through the regular
-  authenticated server client and relies on RLS for authorization. It's there
-  for future backend-only tooling.
+  won't establish a session until the confirmation link is clicked (it will
+  land on `/confirm`, which exchanges the code and redirects to `/dashboard`).
 - `getUserMedia` (camera recording on `/c/[slug]`) requires a secure context.
   `localhost` counts as secure even over plain HTTP, so same-machine testing
-  needs no setup. Testing on a real phone needs either `next dev
-  --experimental-https` (cert is valid for the `localhost` hostname only —
-  a phone hitting your LAN IP will see a hostname-mismatch warning to click
-  through) or a tunnel like `ngrok http 3000` (real cert, no warnings).
-
-## Next.js 16 conventions used throughout
-
-- `params`/`searchParams` are async — always `const { slug } = await
-  props.params`, typed with the generated `PageProps<'/route'>` (run `pnpm
-  dlx next typegen` after adding new routes, or just `next dev`/`next build`).
-- `cookies()` from `next/headers` is async — always `await cookies()`.
-- Middleware lives in `proxy.ts` at the project root, exported function is
-  `proxy`, runtime is always `nodejs` (no edge runtime option).
-- Turbopack is the default bundler — no custom webpack config exists or
-  should be added.
-- No React Compiler, no Cache Components — caching stays boring: `/c/[slug]`
-  and everything under `/dashboard` are fully dynamic.
+  needs no setup. Testing on a real phone needs either a dev server with a
+  trusted local cert or a tunnel like `ngrok http 3000` (real cert, no
+  warnings).
+- The video MIME ladder (`video/mp4;codecs=avc1` → `video/webm;codecs=vp9` →
+  `video/webm`, in `useVideoCapture.ts`) and `playsinline`/`muted` handling
+  matter most on iOS Safari — test the record flow on a real device, not
+  just desktop Chrome, before shipping changes to that composable.

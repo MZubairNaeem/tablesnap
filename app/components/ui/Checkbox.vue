@@ -1,0 +1,29 @@
+<script setup lang="ts">
+import { CheckboxRoot, CheckboxIndicator, type CheckboxRootEmits, type CheckboxRootProps } from 'reka-ui'
+import { CheckIcon } from '@lucide/vue'
+import type { HTMLAttributes } from 'vue'
+import { cn } from '@/lib/utils'
+
+const props = defineProps<CheckboxRootProps & { class?: HTMLAttributes['class'] }>()
+const emits = defineEmits<CheckboxRootEmits>()
+const modelValue = defineModel<boolean | 'indeterminate'>()
+</script>
+
+<template>
+  <CheckboxRoot
+    v-bind="props"
+    v-model="modelValue"
+    data-slot="checkbox"
+    :class="
+      cn(
+        'peer relative flex size-4 shrink-0 items-center justify-center rounded-[4px] border border-input transition-colors outline-none group-has-disabled/field:opacity-50 after:absolute after:-inset-x-3 after:-inset-y-2 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground dark:bg-input/30 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 dark:data-[state=checked]:bg-primary',
+        props.class,
+      )
+    "
+    v-on="emits"
+  >
+    <CheckboxIndicator data-slot="checkbox-indicator" class="grid place-content-center text-current transition-none [&>svg]:size-3.5">
+      <CheckIcon />
+    </CheckboxIndicator>
+  </CheckboxRoot>
+</template>
