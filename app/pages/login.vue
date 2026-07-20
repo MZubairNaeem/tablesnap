@@ -33,10 +33,18 @@ const onSubmit = handleSubmit(async (values) => {
   // "global-auth" middleware still sees no session and bounces straight
   // back to /login, leaving this button stuck on "Logging in...". Populate
   // the state synchronously from the sign-in response instead of waiting.
+  //
+  // getClaims() must be called with the access token in hand: called with no
+  // argument it re-reads the session via getSession() internally, which can
+  // still race the write we just did above and resolve to no session at all.
   useSupabaseSession().value = data.session
-  const { data: claimsData } = await supabase.auth.getClaims()
-  useSupabaseUser().value = claimsData?.claims ?? null
-
+  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(data.session.access_token)
+  if (claimsError || !claimsData) {
+    formError.value = claimsError?.message ?? 'Could not verify session.'
+    submitting.value = false
+    return
+  }
+  useSupabaseUser().value = claimsData.claims
   await navigateTo('/dashboard')
 })
 </script>

@@ -20,7 +20,17 @@ export default defineNuxtConfig({
   ],
 
   css: ['~/assets/css/globals.css'],
-  vite: { plugins: [tailwindcss()] },
+  vite: {
+    plugins: [tailwindcss()],
+    // Nitro's server bundle doesn't always inline Vue's build-time feature
+    // flags the way the client bundle does, which throws
+    // "__VUE_PROD_DEVTOOLS__ is not defined" at runtime on Vercel. Defining
+    // them explicitly forces the replacement in every bundle.
+    define: {
+      __VUE_PROD_DEVTOOLS__: 'false',
+      __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false',
+    },
+  },
 
   // Flat component names: <Button/>, not <UiButton/> — matches every
   // existing call site so the port stays mechanical. Recursive by default,
@@ -37,7 +47,10 @@ export default defineNuxtConfig({
     },
     cookieOptions: {
       sameSite: 'lax',
-      secure: true,
+      // Secure cookies require HTTPS; local dev runs on plain http://localhost,
+      // where a Secure-flagged cookie never round-trips back to the server,
+      // making the session invisible to SSR and bouncing every refresh to /login.
+      secure: process.env.NODE_ENV === 'production',
     },
     clientOptions: {
       auth: {
