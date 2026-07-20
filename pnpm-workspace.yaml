@@ -4,3 +4,5 @@ allowBuilds:
   sharp: true
   unrs-resolver: true
   vue-demi: true
+patchedDependencies:
+  '@pinia/nuxt@1.0.1': patches/@pinia__nuxt@1.0.1.patch

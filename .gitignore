@@ -15,6 +15,7 @@
 
 # nuxt
 /.nuxt/
+/.vercel/
 /.output/
 /dist/
 

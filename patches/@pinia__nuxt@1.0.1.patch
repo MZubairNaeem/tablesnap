@@ -1,0 +1,39 @@
+diff --git a/dist/runtime/plugin.js b/dist/runtime/plugin.js
+index 39173c7a822a9b421581de714fe7eeb2cdad1936..0cbc3fa6e619cc6c5a6e463a4b2e25ec280a469a 100644
+--- a/dist/runtime/plugin.js
++++ b/dist/runtime/plugin.js
+@@ -1,5 +1,5 @@
+ import { createPinia, setActivePinia } from "pinia";
+-import { defineNuxtPlugin, useNuxtApp } from "#app";
++import { defineNuxtPlugin } from "#app";
+ import { toRaw } from "vue";
+ const plugin = defineNuxtPlugin({
+   name: "pinia",
+@@ -10,18 +10,20 @@ const plugin = defineNuxtPlugin({
+     if (nuxtApp.payload && nuxtApp.payload.pinia) {
+       pinia.state.value = nuxtApp.payload.pinia;
+     }
++    // Closes over `pinia` directly instead of re-resolving it from
++    // useNuxtApp() inside the hook body: on Vercel's serverless runtime the
++    // async SSR context for this request can be gone by the time
++    // "app:rendered" fires, making useNuxtApp().$pinia undefined and
++    // crashing every request. See https://github.com/vuejs/pinia/discussions/3067.
++    nuxtApp.hooks.hookOnce("app:rendered", () => {
++      nuxtApp.payload.pinia = toRaw(pinia).state.value;
++      setActivePinia(void 0);
++    });
+     return {
+       provide: {
+         pinia
+       }
+     };
+-  },
+-  hooks: {
+-    "app:rendered"() {
+-      const nuxtApp = useNuxtApp();
+-      nuxtApp.payload.pinia = toRaw(nuxtApp.$pinia).state.value;
+-      setActivePinia(void 0);
+-    }
+   }
+ });
+ export default plugin;
