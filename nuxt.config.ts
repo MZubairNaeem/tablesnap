@@ -75,8 +75,9 @@ export default defineNuxtConfig({
     },
   },
 
-  nitro: { preset: 'node-server' },
-
+  // No explicit preset: Nitro auto-detects the deploy target (Vercel sets
+  // the VERCEL env var at build time, which picks the `vercel` preset and
+  // emits .vercel/output/* instead of a plain node-server .output/).
   routeRules: {
     // Public collection funnel — per-slug data, never statically cached.
     '/c/**': { ssr: true, cache: false },
