@@ -10,7 +10,11 @@ import { serverSupabaseClient, serverSupabaseUser } from '#supabase/server'
  * behavioral requirement of the migration.
  */
 export async function requireBusiness(event: H3Event) {
-  const user = await serverSupabaseUser(event)
+  // serverSupabaseUser() throws a bare (statusCode-less, defaults to 500)
+  // createError on any getClaims() failure -- an expired/rotated refresh
+  // token included -- so a stale session surfaces as a clean 401 instead of
+  // a 500.
+  const user = await serverSupabaseUser(event).catch(() => null)
   if (!user) {
     throw createError({ statusCode: 401, statusMessage: 'Not authenticated' })
   }

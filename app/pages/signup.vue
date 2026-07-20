@@ -45,6 +45,13 @@ const onSubmit = handleSubmit(async (values) => {
     return
   }
 
+  // See login.vue -- populate session/user state synchronously instead of
+  // waiting on the async onAuthStateChange listener, otherwise the
+  // "global-auth" middleware still sees no session and bounces back.
+  useSupabaseSession().value = data.session
+  const { data: claimsData } = await supabase.auth.getClaims()
+  useSupabaseUser().value = claimsData?.claims ?? null
+
   await navigateTo('/dashboard')
 })
 </script>

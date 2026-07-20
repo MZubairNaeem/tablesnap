@@ -29,13 +29,21 @@ export const useBusinessStore = defineStore('business', {
 
       // useSupabaseUser() holds decoded JWT claims (client.auth.getClaims()),
       // not a Supabase User object -- the id is `.sub`, there is no `.id`.
-      const { data } = await supabase
-        .from('businesses')
-        .select('*')
-        .eq('owner_id', user.value.sub)
-        .single<Business>()
+      // A stale/expired refresh-token cookie on a hard reload makes this
+      // throw instead of returning a postgrest error -- treat that the same
+      // as "no business" rather than letting it crash SSR rendering.
+      try {
+        const { data } = await supabase
+          .from('businesses')
+          .select('*')
+          .eq('owner_id', user.value.sub)
+          .single<Business>()
 
-      this.business = data
+        this.business = data
+      } catch {
+        this.business = null
+      }
+
       this.loaded = true
     },
     /**

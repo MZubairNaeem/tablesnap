@@ -19,13 +19,23 @@ const onSubmit = handleSubmit(async (values) => {
   submitting.value = true
   formError.value = null
 
-  const { error } = await supabase.auth.signInWithPassword(values)
+  const { data, error } = await supabase.auth.signInWithPassword(values)
 
   if (error) {
     formError.value = error.message
     submitting.value = false
     return
   }
+
+  // @nuxtjs/supabase's session/user state only updates via the client's
+  // onAuthStateChange listener, which fires asynchronously (deferred by
+  // supabase-js) -- navigating immediately races it, so the global
+  // "global-auth" middleware still sees no session and bounces straight
+  // back to /login, leaving this button stuck on "Logging in...". Populate
+  // the state synchronously from the sign-in response instead of waiting.
+  useSupabaseSession().value = data.session
+  const { data: claimsData } = await supabase.auth.getClaims()
+  useSupabaseUser().value = claimsData?.claims ?? null
 
   await navigateTo('/dashboard')
 })
