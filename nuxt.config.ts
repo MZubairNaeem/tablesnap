@@ -22,10 +22,10 @@ export default defineNuxtConfig({
   css: ['~/assets/css/globals.css'],
   vite: {
     plugins: [tailwindcss()],
-    // Nitro's server bundle doesn't always inline Vue's build-time feature
-    // flags the way the client bundle does, which throws
-    // "__VUE_PROD_DEVTOOLS__ is not defined" at runtime on Vercel. Defining
-    // them explicitly forces the replacement in every bundle.
+    // Dead-code-eliminates devtools/hydration-warning branches from the
+    // client bundle. Doesn't reach Nitro's server bundle or externalized
+    // deps (e.g. Pinia on Vercel) — see server/plugins/vue-prod-flags.ts
+    // for the runtime fix that covers those.
     define: {
       __VUE_PROD_DEVTOOLS__: 'false',
       __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false',
