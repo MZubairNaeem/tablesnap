@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 
 type ThemeChoice = 'system' | 'light' | 'dark'
 
-const STORAGE_KEY = 'vouch-theme'
+const STORAGE_KEY = 'tablesnap-theme'
 
 const NEXT: Record<ThemeChoice, ThemeChoice> = {
   system: 'light',

@@ -31,7 +31,7 @@ async function handleLogout() {
 <template>
   <aside class="sticky top-0 flex h-svh w-64 shrink-0 flex-col self-start overflow-y-auto border-r bg-sidebar">
     <div class="flex flex-col gap-3 px-5 py-5">
-      <span class="font-display text-lg font-semibold tracking-tight">Vouch</span>
+      <span class="font-display text-lg font-semibold tracking-tight">TableSnap</span>
       <div class="flex items-center gap-2.5">
         <div
           class="flex size-7 items-center justify-center rounded-sm text-xs font-semibold text-primary-foreground"

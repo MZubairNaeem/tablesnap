@@ -1,4 +1,4 @@
--- Vouch schema: tables, RLS policies, storage buckets, and the
+-- TableSnap schema: tables, RLS policies, storage buckets, and the
 -- auto-provisioning trigger that creates a business + seed questions on signup.
 --
 -- Run this once against a fresh Supabase project (SQL Editor, or `psql`).

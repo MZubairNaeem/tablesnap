@@ -27,7 +27,7 @@ const is404 = computed(() => props.error.statusCode === 404)
       </details>
     </template>
     <NuxtLink to="/" class="mt-2 text-sm font-medium underline underline-offset-4" @click.prevent="clearError({ redirect: '/' })">
-      Go to Vouch
+      Go to TableSnap
     </NuxtLink>
   </div>
 </template>

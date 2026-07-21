@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { toTypedSchema } from '@vee-validate/zod'
-import { useForm } from 'vee-validate'
-import { businessSettingsSchema } from '@/lib/validations/business'
-import type { Business } from '@/lib/supabase/types'
+import type { Business } from '@/lib/supabase/types';
+import { businessSettingsSchema } from '@/lib/validations/business';
+import { toTypedSchema } from '@vee-validate/zod';
+import { useForm } from 'vee-validate';
 
 const props = defineProps<{ business: Business }>()
 

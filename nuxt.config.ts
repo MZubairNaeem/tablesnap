@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 // theme. Absence of both classes falls back to the OS preference (handled in
 // app/assets/css/globals.css), which is why "system" is simply the no-class
 // state. Ported verbatim from the old app/layout.tsx THEME_INIT_SCRIPT.
-const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem("vouch-theme");if(t==="light"||t==="dark"){document.documentElement.classList.add(t)}}catch(e){}})();`
+const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem("tablesnap-theme");if(t==="light"||t==="dark"){document.documentElement.classList.add(t)}}catch(e){}})();`
 
 export default defineNuxtConfig({
   compatibilityDate: '2026-07-01',
@@ -80,7 +80,7 @@ export default defineNuxtConfig({
     head: {
       htmlAttrs: { lang: 'en', class: 'h-full antialiased' },
       bodyAttrs: { class: 'min-h-full flex flex-col' },
-      title: 'Vouch — Video testimonials for local businesses',
+      title: 'TableSnap — Video testimonials for local businesses',
       meta: [
         { name: 'description', content: 'Collect and showcase video testimonials from your customers.' },
       ],

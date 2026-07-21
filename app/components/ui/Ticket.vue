@@ -3,7 +3,7 @@ import { computed, type HTMLAttributes } from 'vue'
 import { cn } from '@/lib/utils'
 
 /**
- * The Ticket — Vouch's signature element.
+ * The Ticket — TableSnap's signature element.
  *
  * A warm receipt/order-chit rendered with a torn perforated edge (a CSS mask,
  * so it is color-independent and survives any per-tenant brand color). It is

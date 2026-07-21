@@ -53,7 +53,7 @@ const onSubmit = handleSubmit(async (values) => {
   <div class="relative mx-auto flex min-h-svh w-full max-w-sm flex-col justify-center gap-6 px-6 py-10">
     <ThemeToggle class="absolute top-6 right-6" />
     <div>
-      <h1 class="text-2xl font-semibold tracking-tight">Log in to Vouch</h1>
+      <h1 class="text-2xl font-semibold tracking-tight">Log in to TableSnap</h1>
       <p class="mt-1 text-sm text-muted-foreground">Manage your testimonials and questions.</p>
     </div>
 

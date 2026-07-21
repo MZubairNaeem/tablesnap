@@ -95,7 +95,7 @@ function exportCsv() {
   const url = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
   anchor.href = url
-  anchor.download = 'vouch-customers.csv'
+  anchor.download = 'tablesnap-customers.csv'
   anchor.click()
   URL.revokeObjectURL(url)
 }

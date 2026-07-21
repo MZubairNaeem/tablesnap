@@ -48,7 +48,7 @@ const whatsappHref = computed(() => {
 
         <div class="flex w-full flex-col gap-2 sm:flex-row">
           <Button as-child class="flex-1" :disabled="!qrDataUrl">
-            <a :href="qrDataUrl ?? undefined" download="vouch-qr-code.png">
+            <a :href="qrDataUrl ?? undefined" download="tablesnap-qr-code.png">
               <Download class="h-4 w-4" />
               Download QR PNG
             </a>

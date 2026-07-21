@@ -1,4 +1,4 @@
-# Vouch — Spec
+# TableSnap — Spec
 
 Video testimonial collection for restaurants and local businesses. A business
 owner sets up a few questions and a reward, prints a QR code, and customers
